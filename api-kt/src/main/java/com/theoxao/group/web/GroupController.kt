@@ -37,6 +37,7 @@ class GroupController(private val groupService: GroupService) {
     @GetMapping("/list")
     suspend fun userGroupList(): Mono<RestResponse<List<GroupDTO>>> {
         //TODO 小组消息
+        println(Principal.get().id)
         return groupService.groupList(Principal.get().id)
     }
 
