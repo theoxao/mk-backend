@@ -31,7 +31,7 @@ class PrincipalParser(private val principalHeader: String) {
         println(principalHeader)
         if (principalStr != null && principalStr.isNotEmpty()) {
             try {
-                val principal = INSTANCE!!.objectMapper.readValue(String(Base64.getDecoder().decode(principalStr), Charset.forName("UTF-8")), Principal::class.java)
+                val principal = INSTANCE!!.objectMapper.readValue(principalStr, Principal::class.java)
                 principal.principalText = principalStr
                 return Optional.of(principal)
             } catch (e: Exception) {
