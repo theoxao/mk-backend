@@ -24,7 +24,7 @@ class GroupController(private val groupService: GroupService) {
 
     @ApiOperation("创建小组")
     @RequestMapping("/create", method = [RequestMethod.POST])
-    fun create(@ModelAttribute vo: GroupVO): Mono<RestResponse<GroupDTO>> {
+    fun create(@ModelAttribute vo: GroupVO): RestResponse<GroupDTO>? {
         val principal = Principal.get()
         val group = vo.bean()
         group.creatorId = principal.id
@@ -35,7 +35,7 @@ class GroupController(private val groupService: GroupService) {
 
     @ApiOperation("我的小组列表")
     @RequestMapping("/list" ,method = [RequestMethod.GET])
-    suspend fun userGroupList(): Mono<RestResponse<List<GroupDTO>>> {
+    suspend fun userGroupList(): RestResponse<List<GroupDTO?>> {
         //TODO 小组消息
         println(Principal.get().id)
         return groupService.groupList(Principal.get().id)

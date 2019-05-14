@@ -17,12 +17,14 @@ import org.apache.commons.lang.StringUtils
 import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Sort
+import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.ReactiveMongoOperations
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.Assert
 import org.springframework.web.multipart.MultipartFile
 import reactor.core.publisher.Mono
@@ -33,7 +35,8 @@ import java.util.*
  * Created by theo on 2018/12/18
  */
 @Service
-class GroupService(private val mongoTemplate: ReactiveMongoTemplate,
+open class GroupService(private val mongoTemplate: ReactiveMongoTemplate,
+                   private val mongo: MongoTemplate,
                    private val postService: PostService,
                    private val reactiveMongoOperations: ReactiveMongoOperations,
                    private val ossService: OssService) {
@@ -45,7 +48,8 @@ class GroupService(private val mongoTemplate: ReactiveMongoTemplate,
     @Value("\${oss.prefix}")
     var prefix: String = ""
 
-    fun create(group: Group, principal: Principal, imageFile: MultipartFile?): Mono<RestResponse<GroupDTO>> {
+    @Transactional
+    open fun create(group: Group, principal: Principal, imageFile: MultipartFile?): RestResponse<GroupDTO>? {
         val id = ObjectId()
         group.id = id
         imageFile?.let {
@@ -54,31 +58,23 @@ class GroupService(private val mongoTemplate: ReactiveMongoTemplate,
             }
             group.image = "$prefix$GROUP_DIR/${id.toHexString()}.${FilenameUtils.getExtension(imageFile.originalFilename)}"
         }
-        return reactiveMongoOperations.inTransaction().execute { template ->
-            template.save(group)
-                    .doOnNext {
-                        template.save(UserGroup(group.creatorId, it.id!!.toHexString(), true)).subscribe()
-                    }.doOnNext {
-                        val record = GroupActivity(it.id?.toHexString(), group.creatorId, principal.displayName, principal.avatarUrl, ActivityEnum.CREATE_GROUP.code)
-                        template.save(record).subscribe()
-                    }.doOnError {
-                        throw RuntimeException(it.message)
-                    }.map {
-                        RestResponse<GroupDTO>().ok().withData(GroupDTO.fromEntity(it))
-                    }
-        }.toMono()
+
+        val saved = mongo.save(group)
+        mongo.save(UserGroup(group.creatorId, saved.id!!.toHexString(), true))
+        mongo.save(GroupActivity(saved.id?.toHexString(), saved.creatorId, principal.displayName, principal.avatarUrl, ActivityEnum.CREATE_GROUP.code))
+        return RestResponse<GroupDTO>().ok().withData(GroupDTO.fromEntity(saved))
+
     }
 
-    suspend fun groupList(userId: String): Mono<RestResponse<List<GroupDTO>>> {
-        return mongoTemplate.find(Query.query(Criteria.where("userId").`is`(userId)).with(Sort(Sort.Direction.DESC, "_id")), UserGroup::class.java)
-                .flatMap {
-                    mongoTemplate.find(Query.query(Criteria.where("_id").`is`(it.groupId)), Group::class.java)
-                            .map { record ->
-                                val result = GroupDTO.fromEntity(record)
-                                result.owner = userId == record.creatorId
-                                result
-                            }
-                }.collectList().map { record -> RestResponse<List<GroupDTO>>().ok().withData(record) }
+    suspend fun groupList(userId: String): RestResponse<List<GroupDTO?>> {
+        val userGroups = mongo.find(Query.query(Criteria.where("userId").`is`(userId)).with(Sort(Sort.Direction.DESC, "_id")), UserGroup::class.java)
+        val list = userGroups.map {
+            val group = mongo.findOne(Query.query(Criteria.where("_id").`is`(it.groupId)), Group::class.java)
+            val result = GroupDTO.fromEntity(group)
+            result?.owner = userId == group?.creatorId
+            result
+        }
+        return RestResponse<List<GroupDTO?>>().ok().withData(list)
     }
 
     fun editGroup(id: String, name: String?, remark: String?, userId: String): Mono<RestResponse<Any>> {

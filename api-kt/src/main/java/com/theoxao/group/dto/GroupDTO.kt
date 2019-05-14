@@ -5,8 +5,7 @@ import com.theoxao.group.model.Group
 import com.theoxao.group.model.Member
 import io.swagger.annotations.ApiModelProperty
 import org.springframework.beans.BeanUtils
-
-import java.util.Date
+import java.util.*
 
 /**
  * Created by theo on 2018/12/18
@@ -37,12 +36,15 @@ class GroupDTO {
 
     companion object {
 
-        fun fromEntity(entity: Group): GroupDTO {
-            val record = GroupDTO()
-            BeanUtils.copyProperties(entity, record)
-            record.id = entity.id?.toHexString()
-            record.memberCount = entity.members.size
-            return record
+        fun fromEntity(entity: Group?): GroupDTO? {
+            return entity?.let {
+
+                val record = GroupDTO()
+                BeanUtils.copyProperties(entity, record)
+                record.id = entity.id?.toHexString()
+                record.memberCount = entity.members.size
+                record
+            }
         }
     }
 }
