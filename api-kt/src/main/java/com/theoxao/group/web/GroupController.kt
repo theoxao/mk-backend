@@ -43,7 +43,7 @@ class GroupController(private val groupService: GroupService) {
 
     @ApiOperation("小组信息详情")
     @RequestMapping("/detail" ,method = [RequestMethod.GET])
-    fun groupDetail(@ApiParam("小组ID") @RequestParam id: String): Mono<RestResponse<GroupDTO>> {
+    fun groupDetail(@ApiParam("小组ID") @RequestParam id: String):RestResponse<GroupDTO> {
         return groupService.findById(id, Principal.get().id)
     }
 

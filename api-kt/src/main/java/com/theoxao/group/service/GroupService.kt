@@ -36,10 +36,10 @@ import java.util.*
  */
 @Service
 open class GroupService(private val mongoTemplate: ReactiveMongoTemplate,
-                   private val mongo: MongoTemplate,
-                   private val postService: PostService,
-                   private val reactiveMongoOperations: ReactiveMongoOperations,
-                   private val ossService: OssService) {
+                        private val mongo: MongoTemplate,
+                        private val postService: PostService,
+                        private val reactiveMongoOperations: ReactiveMongoOperations,
+                        private val ossService: OssService) {
 
     companion object {
         const val GROUP_DIR = "group_image"
@@ -95,15 +95,11 @@ open class GroupService(private val mongoTemplate: ReactiveMongoTemplate,
                 .defaultIfEmpty(RestResponse.notFound())
     }
 
-    fun findById(id: String, userId: String): Mono<RestResponse<GroupDTO>> {
-        return mongoTemplate.findById(ObjectId(id), Group::class.java)
-                .map {
-                    val record = GroupDTO.fromEntity(it)
-                    record?.owner = userId == it.creatorId
-                    record
-                }.map {
-                    RestResponse<GroupDTO>().ok().withData(it)
-                }.defaultIfEmpty(RestResponse.notFound())
+    fun findById(id: String, userId: String): RestResponse<GroupDTO>? {
+        val it = mongo.findById(ObjectId(id), Group::class.java) ?: return RestResponse.notFound()
+        val record = GroupDTO.fromEntity(it)
+        record?.owner = userId == it.creatorId
+        return RestResponse<GroupDTO>().ok().withData(record)
     }
 
     fun findMembers(id: String, userId: String): Mono<RestResponse<List<Member>>> {
