@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: "api-kt"
+---
+spring:
+  profiles:
+    active: "docker"
+  cloud:
+    config:
+      uri: "http://10.32.0.2:8888"
+    inetutils.preferredNetworks[0]: "^10.40"
