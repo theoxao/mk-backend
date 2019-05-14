@@ -99,7 +99,7 @@ open class GroupService(private val mongoTemplate: ReactiveMongoTemplate,
         return mongoTemplate.findById(ObjectId(id), Group::class.java)
                 .map {
                     val record = GroupDTO.fromEntity(it)
-                    record.owner = userId == it.creatorId
+                    record?.owner = userId == it.creatorId
                     record
                 }.map {
                     RestResponse<GroupDTO>().ok().withData(it)
