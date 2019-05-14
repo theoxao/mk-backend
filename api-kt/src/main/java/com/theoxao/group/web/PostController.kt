@@ -22,13 +22,13 @@ import java.util.*
 class PostController(private val postService: PostService   ) {
 
     @ApiOperation("小组动态列表")
-    @GetMapping("/list")
+    @RequestMapping("/list" ,method = [RequestMethod.GET])
     fun list(@ApiParam("小组ID") @RequestParam id: String): Mono<RestResponse<List<PostDTO>>> {
         return postService.list(id, Principal.get().id)
     }
 
     @ApiOperation("新发言")
-    @PostMapping("/post")
+    @RequestMapping("/post"  , method=[RequestMethod.POST])
     fun newPost(@ModelAttribute vo: PostVO): Mono<RestResponse<PostDTO>> {
         Assert.isTrue(vo.groupId != null, "小组编号不能为空")
         val post = Post(vo.groupId, Principal.get().id, vo.content)
