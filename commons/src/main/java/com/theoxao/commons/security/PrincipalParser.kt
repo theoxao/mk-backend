@@ -28,6 +28,7 @@ class PrincipalParser(private val principalHeader: String) {
         }
         val principalStr = headers[INSTANCE!!.principalHeader]
         println(principalStr)
+        println(principalHeader)
         if (principalStr != null && principalStr.isNotEmpty()) {
             try {
                 val principal = INSTANCE!!.objectMapper.readValue(String(Base64.getDecoder().decode(principalStr), Charset.forName("UTF-8")), Principal::class.java)

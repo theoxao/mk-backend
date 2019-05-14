@@ -14,11 +14,11 @@ import org.springframework.stereotype.Component
 @Component
 class PrincipalFilter : Filter {
     override fun after(call: ApplicationCall) {
-        val parser = PrincipalParser("auth-principal")
-        parser.parsePrincipal(call.request.headers).ifPresent(Principal.Companion::store)
+        Principal.release()
     }
 
     override fun before(call: ApplicationCall) {
-        Principal.release()
+        val parser = PrincipalParser("auth-principal")
+        parser.parsePrincipal(call.request.headers).ifPresent(Principal.Companion::store)
     }
 }
