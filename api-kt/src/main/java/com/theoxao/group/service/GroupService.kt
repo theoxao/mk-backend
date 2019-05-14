@@ -95,7 +95,7 @@ open class GroupService(private val mongoTemplate: ReactiveMongoTemplate,
                 .defaultIfEmpty(RestResponse.notFound())
     }
 
-    fun findById(id: String, userId: String): RestResponse<GroupDTO>? {
+    fun findById(id: String, userId: String): RestResponse<GroupDTO?> {
         val it = mongo.findById(ObjectId(id), Group::class.java) ?: return RestResponse.notFound()
         val record = GroupDTO.fromEntity(it)
         record?.owner = userId == it.creatorId
