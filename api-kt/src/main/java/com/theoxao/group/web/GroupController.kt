@@ -23,18 +23,18 @@ import java.util.*
 class GroupController(private val groupService: GroupService) {
 
     @ApiOperation("创建小组")
-    @PostMapping("/create")
+    @RequestMapping("/create", method = [RequestMethod.POST])
     fun create(@ModelAttribute vo: GroupVO): Mono<RestResponse<GroupDTO>> {
         val principal = Principal.get()
         val group = vo.bean()
         group.creatorId = principal.id
         group.createAt = Date()
         group.members = Arrays.asList(Member(principal.id, principal.displayName, principal.displayName, principal.avatarUrl, true))
-        return groupService.create(group, principal ,vo.imageFile)
+        return groupService.create(group, principal, vo.imageFile)
     }
 
     @ApiOperation("我的小组列表")
-    @GetMapping("/list")
+    @RequestMapping("/list" ,method = [RequestMethod.GET])
     suspend fun userGroupList(): Mono<RestResponse<List<GroupDTO>>> {
         //TODO 小组消息
         println(Principal.get().id)
@@ -42,7 +42,7 @@ class GroupController(private val groupService: GroupService) {
     }
 
     @ApiOperation("小组信息详情")
-    @GetMapping("/detail")
+    @RequestMapping("/detail" ,method = [RequestMethod.GET])
     fun groupDetail(@ApiParam("小组ID") @RequestParam id: String): Mono<RestResponse<GroupDTO>> {
         return groupService.findById(id, Principal.get().id)
     }
